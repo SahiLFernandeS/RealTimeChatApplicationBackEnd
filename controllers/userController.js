@@ -36,42 +36,51 @@ const userRegister = asyncHandler(async (req, res) => {
 });
 
 const userLogin = asyncHandler(async (req, res) => {
-  const { email, password } = req.body;
+  try {
+    const { email, password } = req.body;
 
-  if (!email || !password) {
-    res.status(400);
-    throw new Error("Please Enter All The Fields");
-  }
+    if (!email || !password) {
+      return res.send({
+        status: false,
+        message: "Please Enter All The Fields",
+      });
+    }
 
-  const user = await User.findOne({ email });
+    const user = await User.findOne({ email });
 
-  if (user && user.password == password) {
-    res.status(200).json({
-      _id: user._id,
-      name: user.name,
-      email: user.email,
-      token: generateToken(user._id),
-    });
-  } else {
-    res.status(400);
-    throw new Error("Invalid User");
+    if (user && user.password == password) {
+      return res.send({
+        _id: user._id,
+        name: user.name,
+        email: user.email,
+        token: generateToken(user._id),
+      });
+    }
+
+    return res.send({ status: false, message: "Invalid Email or Password" });
+  } catch (error) {
+    return res.send({ status: false, message: "Internal Server Error" });
   }
 });
 
 // api/user?search="...."
 const allUsers = asyncHandler(async (req, res) => {
-  const keyword = req.query.search
-    ? {
-        $or: [
-          { name: { $regex: req.query.search, $options: "i" } },
-          { email: { $regex: req.query.search, $options: "i" } },
-        ],
-      }
-    : {};
-  const users = await User.find(keyword)
-    .find({ _id: { $ne: req.user._id } })
-    .select("-password");
+  try {
+    const keyword = req.query.search
+      ? {
+          $or: [
+            { name: { $regex: req.query.search, $options: "i" } },
+            { email: { $regex: req.query.search, $options: "i" } },
+          ],
+        }
+      : {};
+    const users = await User.find(keyword)
+      .find({ _id: { $ne: req.user._id } })
+      .select("-password");
 
-  res.send(users);
+    return res.send(users);
+  } catch (error) {
+    return res.send({ status: false, message: "Internal Server Error" });
+  }
 });
 module.exports = { userRegister, userLogin, allUsers };
