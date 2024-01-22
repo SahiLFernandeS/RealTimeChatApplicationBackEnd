@@ -3,15 +3,10 @@ const connectDB = require("./config/db");
 const userRoutes = require("./routes/userRoutes");
 const chatRoutes = require("./routes/chatRoutes");
 const messageRoutes = require("./routes/messageRoutes");
-// const bodyParser = require("body-parser");
 const cors = require("cors");
 require("dotenv").config();
 const { createServer } = require("http");
 const { Server } = require("socket.io");
-const Message = require("./models/messageModel");
-const Chat = require("./models/chatModel");
-const jwtToken = require("jsonwebtoken");
-const User = require("./models/userModel");
 
 const app = express();
 
@@ -25,31 +20,6 @@ const io = new Server(httpServer, {
 
 io.on("connection", (socket) => {
   console.log("User Connected: ", socket.id);
-
-  async function authenticateUser() {
-    let token;
-
-    if (socket.handshake.headers.token) {
-      try {
-        token = socket.handshake.headers.token;
-
-        var decode = jwtToken.verify(token, process.env.JWT_SECRET);
-        // console.log("decode-------->", decode);
-        var user = await User.findById(decode.id).select("-password");
-        // return user;
-        return { status: true, data: user, message: "Access Granted" };
-      } catch (err) {
-        console.log("error------->", err);
-        return { status: false, data: {}, message: "Not Authorize, No Token" };
-      }
-    }
-
-    if (!token) {
-      return { status: false, data: {}, message: "Not Authorize, No Token" };
-    }
-  }
-
-  // authenticateUser().then((res) => console.log("res----->", res));
 
   socket.on("joinRoom", async (data) => {
     try {
